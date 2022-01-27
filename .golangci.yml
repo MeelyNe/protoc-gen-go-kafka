@@ -1,0 +1,124 @@
+run:
+  deadline: 30s
+  skip-dirs:
+    - (\/|^)gen(\/|$)
+  skip-files:
+    - ".*_test\\.go$"
+
+linters:
+  disable-all: true
+  enable:
+    - goerr113
+    - deadcode
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+    - asciicheck
+    - bodyclose
+    - dupl
+    - durationcheck
+    - errname
+    - exhaustive
+    - exportloopref
+    - forcetypeassert
+    - funlen
+    - gci
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - goprintffuncname
+    - gosec
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - tagliatelle # ??? rules
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - wastedassign
+    - whitespace
+    - gofumpt
+    - gomoddirectives
+    - gomodguard # черный список для зависимостей + рекомендации зависимостей, если обнаружены другие
+    - ifshort
+    - wsl
+    - nlreturn
+    - wrapcheck
+
+linters-settings:
+  gci:
+    local-prefixes: github.com/king-gophers/protoc-gen-kafka
+  gocyclo:
+    min-complexity: 15
+  nestif:
+    min-complexity: 10
+  dupl:
+    threshold: 150
+  funlen:
+    lines: 100
+    statements: 60
+  gosec:
+    excludes:
+      - G402
+  tagliatelle:
+    case:
+      use-field-name: false
+      rules:
+        # support string case: `camel`, `pascal`, `kebab`, `snake`, `goCamel`, `goPascal`, `goKebab`, `goSnake`, `upper`, `lower`
+        json: snake
+        yaml: camel
+        xml: camel
+        bson: camel
+        avro: snake
+        mapstructure: kebab
+
+issues:
+  max-same: 0
+  max-per-linter: 0
+  exclude-use-default: false
+
+linters-disabled:
+  - depguard # черный список для зависимостей прописанный в отдельном json файле, лучше использовать gomodguard
+  - exhaustivestruct # запрет на объявление структур без объявления некоторых полей
+  - forbidigo # запрет использования кода по regexp
+  - cyclop # gocyclo с тем же функционалом, звезд больше
+  - godot # точки в комментах, думаю это не так важно, чтобы придираться
+  - godox # слова типа TO DO могут быть рабочим инструментом в рамках процесса, не стоит запрещать
+  - dogsled # _, _, _, a := RGBA()
+  - goheader # мы не используем у себя в файлах хедеры, это скорее для opensource нужно
+  - importas # заставляет писать алиасы по списку в конфиге
+  - lll # контроль длины строк
+  - promlinter # специфичный линтер для именования метрик Prometheus
+  - stylecheck # то же что и revive
+  - gomnd # магические цифры | strconv.ParseInt(t.Code, 10, 0) toChunks(items, 1000)
+  - paralleltest # заставляет писать t.Parallel() в тестах
+  - testpackage # тесты в отдельных пакетах
+
+linters-underquestion:
+  - nilerr # при обработке ошибок запрещает их обнулять
+  - wrapcheck # обязательное оборачивание ошибок из других пакетов
+
+linters-unreleased:
+  - ireturn # разрешить возвращать структуры, а принимать интерфейсы v1.43.0
+  - nilnil # проверяет чтобы не вызывали проверку на nil несколько раз (т.е. когда уже понятно что это значение не nil) v1.43.0
+  - tenv # setenv в тестах через t вместо глобального v1.43.0

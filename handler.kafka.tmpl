@@ -1,0 +1,103 @@
+// NEED TO BE GENERATED
+package {{ .PackageName }}
+
+import (
+	"context"
+	"encoding/json"
+
+	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+)
+
+// {{ .ModelName }}Event структурая, содержащая поля сообщения
+type {{ .ModelName }}Event struct {
+	ID   uuid.UUID
+	Meta map[string]string
+	Body *{{.ModelName}}
+}
+
+// New{{.ModelName}}Event конструктор события {{.ModelName}}Event
+func New{{.ModelName}}Event(data *{{.ModelName}}) *{{.ModelName}}Event {
+	return &{{.ModelName}}Event{
+		ID:   uuid.New(),
+		Meta: make(map[string]string),
+		Body: data,
+	}
+}
+
+// {{.ModelName}}Handler интерфейс обработчика сообщения
+type {{.ModelName}}Handler interface {
+	Handle(ctx context.Context, event *{{.ModelName}}Event) error
+}
+
+// {{.ModelName}}HandlerFunc тип-функция, реализующий интефейс {{.ModelName}}Handler
+type {{.ModelName}}HandlerFunc func(ctx context.Context, event *{{.ModelName}}Event) error
+
+func (fn {{.ModelName}}HandlerFunc) Handle(ctx context.Context, event *{{.ModelName}}Event) error {
+	return fn(ctx, event)
+}
+
+// Make{{.ModelName}}Handler конструктор метода для обработки входящих сообщений типа {{.ModelName}}Event
+// По умолчанию для обработки ошибок используется стратегия "записать в сентри и пропустить"
+// В данном случае это ошибки парсинга id и тела сообщения. Если ID не представляет собой UUID, или тело соообщения
+// не является JSON-ом - такое сообщение будет пропущено, а запись об инциденте появится в Sentry. Таким образом
+// не произойдет залипания очереди на некорректном сообщении. Если же необходимо кастомное поведение - разработчик
+// может определить свой handler и обработать ошибки в соответствии с собственными нуждами.
+func Make{{.ModelName}}Handler(handler {{.ModelName}}Handler) message.NoPublishHandlerFunc {
+	return func(msg *message.Message) error {
+		r := new({{.ModelName}})
+
+		if err := json.Unmarshal(msg.Payload, r); err != nil {
+			log.Err(err).Msg("невозможно десериализовать данные сообщения")
+
+			return nil
+		}
+
+		id, err := uuid.Parse(msg.UUID)
+		if err != nil {
+			log.Err(err).Msg("невозможно разобрать идентификатор сообщения")
+
+			return nil
+		}
+
+		evt := &{{.ModelName}}Event{
+			ID:   id,
+			Meta: msg.Metadata,
+			Body: r,
+		}
+
+		return handler.Handle(msg.Context(), evt)
+	}
+}
+
+// {{.ModelName}}Publisher интерфейс для отправки сообщений типа {{.ModelName}}Event в очередь
+type {{.ModelName}}Publisher interface {
+	Publish(event *{{.ModelName}}Event) error
+}
+
+type {{.ModelNamePrivate}}Publisher struct {
+	topic string
+	mp    message.Publisher
+}
+
+func (r *{{.ModelNamePrivate}}Publisher) Publish(event *{{.ModelName}}Event) error {
+	payload, err := json.Marshal(event.Body)
+	if err != nil {
+		return errors.Wrap(err, "невозможно сериализовать данные")
+	}
+
+	msg := message.NewMessage(event.ID.String(), payload)
+	msg.Metadata = event.Meta
+
+	return r.mp.Publish(r.topic, msg)
+}
+
+// Make{{.ModelName}}Publisher конструктор для паблишера сообщений типа {{.ModelName}}Event
+func Make{{.ModelName}}Publisher(topic string, p message.Publisher) {{.ModelName}}Publisher {
+	return &{{.ModelNamePrivate}}Publisher{
+		topic: topic,
+		mp:    p,
+	}
+}
