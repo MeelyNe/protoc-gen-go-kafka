@@ -9,7 +9,7 @@ go install github.com/vseinstrumentiru/protoc-gen-go-kafka@latest
 version: v1
 plugins:
     # подключение плагина
-  - name: kafka
+  - name: go-kafka
     # путь для сохранения
     out: generate/
     # suffix=Out установка суффикса

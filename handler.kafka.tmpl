@@ -1,4 +1,3 @@
-// NEED TO BE GENERATED
 package {{ .PackageName }}
 
 import (
@@ -9,47 +8,47 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
-// {{ .ModelName }}Event структурая, содержащая поля сообщения
-type {{ .ModelName }}Event struct {
+type {{.ModelName}}MessageEvent struct {
 	ID   uuid.UUID
 	Meta map[string]string
-	Body *{{.ModelName}}
+	Body *{{.ModelName}}Message
 }
 
-// New{{.ModelName}}Event конструктор события {{.ModelName}}Event
-func New{{.ModelName}}Event(data *{{.ModelName}}) *{{.ModelName}}Event {
-	return &{{.ModelName}}Event{
+// New{{.ModelName}}MessageEvent конструктор события {{.ModelName}}MessageEvent
+func New{{.ModelName}}MessageEvent(data *{{.ModelName}}Message) *{{.ModelName}}MessageEvent {
+	return &{{.ModelName}}MessageEvent{
 		ID:   uuid.New(),
 		Meta: make(map[string]string),
 		Body: data,
 	}
 }
 
-// {{.ModelName}}Handler интерфейс обработчика сообщения
-type {{.ModelName}}Handler interface {
-	Handle(ctx context.Context, event *{{.ModelName}}Event) error
+// {{.ModelName}}MessageHandler интерфейс обработчика сообщения
+type {{.ModelName}}MessageHandler interface {
+	Handle(ctx context.Context, event *{{.ModelName}}MessageEvent) error
 }
 
-// {{.ModelName}}HandlerFunc тип-функция, реализующий интефейс {{.ModelName}}Handler
-type {{.ModelName}}HandlerFunc func(ctx context.Context, event *{{.ModelName}}Event) error
+// {{.ModelName}}MessageHandlerFunc тип-функция, реализующий интефейс {{.ModelName}}MessageHandler
+type {{.ModelName}}MessageHandlerFunc func(ctx context.Context, event *{{.ModelName}}MessageEvent) error
 
-func (fn {{.ModelName}}HandlerFunc) Handle(ctx context.Context, event *{{.ModelName}}Event) error {
+func (fn {{.ModelName}}MessageHandlerFunc) Handle(ctx context.Context, event *{{.ModelName}}MessageEvent) error {
 	return fn(ctx, event)
 }
 
-// Make{{.ModelName}}Handler конструктор метода для обработки входящих сообщений типа {{.ModelName}}Event
+// Make{{.ModelName}}MessageHandler конструктор метода для обработки входящих сообщений типа {{.ModelName}}MessageEvent
 // По умолчанию для обработки ошибок используется стратегия "записать в сентри и пропустить"
 // В данном случае это ошибки парсинга id и тела сообщения. Если ID не представляет собой UUID, или тело соообщения
 // не является JSON-ом - такое сообщение будет пропущено, а запись об инциденте появится в Sentry. Таким образом
 // не произойдет залипания очереди на некорректном сообщении. Если же необходимо кастомное поведение - разработчик
 // может определить свой handler и обработать ошибки в соответствии с собственными нуждами.
-func Make{{.ModelName}}Handler(handler {{.ModelName}}Handler) message.NoPublishHandlerFunc {
+func Make{{.ModelName}}MessageHandler(handler {{.ModelName}}MessageHandler) message.NoPublishHandlerFunc {
 	return func(msg *message.Message) error {
-		r := new({{.ModelName}})
+		r := new({{.ModelName}}Message)
 
-		if err := json.Unmarshal(msg.Payload, r); err != nil {
+		if err := protojson.Unmarshal(msg.Payload, r); err != nil {
 			log.Err(err).Msg("невозможно десериализовать данные сообщения")
 
 			return nil
@@ -62,7 +61,7 @@ func Make{{.ModelName}}Handler(handler {{.ModelName}}Handler) message.NoPublishH
 			return nil
 		}
 
-		evt := &{{.ModelName}}Event{
+		evt := &{{.ModelName}}MessageEvent{
 			ID:   id,
 			Meta: msg.Metadata,
 			Body: r,
@@ -72,18 +71,18 @@ func Make{{.ModelName}}Handler(handler {{.ModelName}}Handler) message.NoPublishH
 	}
 }
 
-// {{.ModelName}}Publisher интерфейс для отправки сообщений типа {{.ModelName}}Event в очередь
-type {{.ModelName}}Publisher interface {
-	Publish(event *{{.ModelName}}Event) error
+// {{.ModelName}}MessagePublisher интерфейс для отправки сообщений типа {{.ModelName}}MessageEvent в очередь
+type {{.ModelName}}MessagePublisher interface {
+	Publish(event *{{.ModelName}}MessageEvent) error
 }
 
-type {{.ModelNamePrivate}}Publisher struct {
+type outgoingPublisher struct {
 	topic string
 	mp    message.Publisher
 }
 
-func (r *{{.ModelNamePrivate}}Publisher) Publish(event *{{.ModelName}}Event) error {
-	payload, err := json.Marshal(event.Body)
+func (r *outgoingPublisher) Publish(event *{{.ModelName}}MessageEvent) error {
+	payload, err := protojson.Marshal(event.Body)
 	if err != nil {
 		return errors.Wrap(err, "невозможно сериализовать данные")
 	}
@@ -94,10 +93,11 @@ func (r *{{.ModelNamePrivate}}Publisher) Publish(event *{{.ModelName}}Event) err
 	return r.mp.Publish(r.topic, msg)
 }
 
-// Make{{.ModelName}}Publisher конструктор для паблишера сообщений типа {{.ModelName}}Event
-func Make{{.ModelName}}Publisher(topic string, p message.Publisher) {{.ModelName}}Publisher {
-	return &{{.ModelNamePrivate}}Publisher{
+// Make{{.ModelName}}MessagePublisher конструктор для паблишера сообщений типа {{.ModelName}}MessageEvent
+func Make{{.ModelName}}MessagePublisher(topic string, p message.Publisher) {{.ModelName}}MessagePublisher {
+	return &outgoingPublisher{
 		topic: topic,
 		mp:    p,
 	}
 }
+
