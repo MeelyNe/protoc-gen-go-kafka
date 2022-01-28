@@ -33,7 +33,6 @@ func main() {
 		if *suffix == "" {
 			*suffix = defaultSuffix
 		}
-
 		for _, file := range plugin.Files {
 			for _, message := range file.Proto.GetMessageType() {
 				if strings.HasSuffix(message.GetName(), *suffix) {
