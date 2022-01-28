@@ -8,7 +8,6 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/pkg/errors"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -19,6 +18,7 @@ type gen struct {
 	ModelNamePrivate string
 	ModelName        string
 	PackageName      string
+	PathFile         string
 }
 
 const defaultSuffix = "Export"
@@ -33,6 +33,7 @@ func main() {
 		if *suffix == "" {
 			*suffix = defaultSuffix
 		}
+
 		for _, file := range plugin.Files {
 			for _, message := range file.Proto.GetMessageType() {
 				if strings.HasSuffix(message.GetName(), *suffix) {
@@ -40,9 +41,12 @@ func main() {
 						ModelNamePrivate: strings.ToLower(message.GetName()),
 						ModelName:        message.GetName(),
 						PackageName:      string(file.GoPackageName),
+						PathFile:         file.Desc.Path(),
 					})
 					if err != nil {
-						return errors.Wrapf(err, "error render template: %s", message.GetName())
+						plugin.Error(err)
+
+						continue
 					}
 					msgName := strings.ToLower(strings.Replace(message.GetName(), *suffix, "", 2))
 					filename := fmt.Sprintf("%s_%s.kafka.go", file.GeneratedFilenamePrefix, msgName)
@@ -50,7 +54,9 @@ func main() {
 					genFile := plugin.NewGeneratedFile(filename, file.GoImportPath)
 
 					if _, err = genFile.Write([]byte(tmpl)); err != nil {
-						return errors.Wrapf(err, "error write template: %s", filename)
+						plugin.Error(err)
+
+						continue
 					}
 				}
 			}
