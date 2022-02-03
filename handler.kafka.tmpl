@@ -88,12 +88,12 @@ type {{.ModelName}}MessagePublisher interface {
 	Publish(event *{{.ModelName}}MessageEvent) error
 }
 
-type outgoingPublisher struct {
+type outgoing{{.ModelName}}Publisher struct {
 	topic string
 	mp    message.Publisher
 }
 
-func (r *outgoingPublisher) Publish(event *{{.ModelName}}MessageEvent) error {
+func (r *outgoing{{.ModelName}}Publisher) Publish(event *{{.ModelName}}MessageEvent) error {
 	payload, err := protojson.Marshal(event.Body)
 	if err != nil {
 		return errors.Wrap(err, "невозможно сериализовать данные")
@@ -111,7 +111,7 @@ func (r *outgoingPublisher) Publish(event *{{.ModelName}}MessageEvent) error {
 
 // Make{{.ModelName}}MessagePublisher конструктор для паблишера сообщений типа {{.ModelName}}MessageEvent
 func Make{{.ModelName}}MessagePublisher(topic string, p message.Publisher) {{.ModelName}}MessagePublisher {
-	return &outgoingPublisher{
+	return &outgoing{{.ModelName}}Publisher{
 		topic: topic,
 		mp:    p,
 	}
