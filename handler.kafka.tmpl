@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
+// {{.ModelName}}MessageEvent структурая, содержащая поля сообщения
 type {{.ModelName}}MessageEvent struct {
 	ID   uuid.UUID
 	Meta map[string]string
@@ -40,7 +41,7 @@ type {{.ModelName}}MessageHandler interface {
 // {{.ModelName}}MessageHandlerFunc тип-функция, реализующий интефейс {{.ModelName}}MessageHandler
 type {{.ModelName}}MessageHandlerFunc func(ctx context.Context, event *{{.ModelName}}MessageEvent) error
 
-// Handle handle event.
+// Handle обработчик событий.
 func (fn {{.ModelName}}MessageHandlerFunc) Handle(ctx context.Context, event *{{.ModelName}}MessageEvent) error {
 	return fn(ctx, event)
 }
@@ -75,7 +76,7 @@ func Make{{.ModelName}}MessageHandler(handler {{.ModelName}}MessageHandler) mess
 		}
 
 		if err = handler.Handle(msg.Context(), evt); err != nil {
-        	return errors.Wrap(err, "handler.Handle")
+        	return errors.Wrap(err, "не удалось обработать событие")
         }
 
         return nil
@@ -102,7 +103,7 @@ func (r *outgoingPublisher) Publish(event *{{.ModelName}}MessageEvent) error {
 	msg.Metadata = event.Meta
 
 	if err = r.mp.Publish(r.topic, msg); err != nil {
-		return errors.Wrap(err, "error publish")
+		return errors.Wrap(err, "не удалось отправить сообщение")
 	}
 
 	return nil
