@@ -21,11 +21,11 @@ import (
 type {{.ModelName}}MessageEvent struct {
 	ID   uuid.UUID
 	Meta map[string]string
-	Body *{{.ModelName}}Message
+	Body *{{.ModelName}}
 }
 
 // New{{.ModelName}}MessageEvent конструктор события {{.ModelName}}MessageEvent
-func New{{.ModelName}}MessageEvent(data *{{.ModelName}}Message) *{{.ModelName}}MessageEvent {
+func New{{.ModelName}}MessageEvent(data *{{.ModelName}}) *{{.ModelName}}MessageEvent {
 	return &{{.ModelName}}MessageEvent{
 		ID:   uuid.New(),
 		Meta: make(map[string]string),
@@ -41,6 +41,7 @@ type {{.ModelName}}MessageHandler interface {
 // {{.ModelName}}MessageHandlerFunc тип-функция, реализующий интефейс {{.ModelName}}MessageHandler
 type {{.ModelName}}MessageHandlerFunc func(ctx context.Context, event *{{.ModelName}}MessageEvent) error
 
+// Handle handle event.
 func (fn {{.ModelName}}MessageHandlerFunc) Handle(ctx context.Context, event *{{.ModelName}}MessageEvent) error {
 	return fn(ctx, event)
 }
@@ -53,7 +54,7 @@ func (fn {{.ModelName}}MessageHandlerFunc) Handle(ctx context.Context, event *{{
 // может определить свой handler и обработать ошибки в соответствии с собственными нуждами.
 func Make{{.ModelName}}MessageHandler(handler {{.ModelName}}MessageHandler) message.NoPublishHandlerFunc {
 	return func(msg *message.Message) error {
-		r := new({{.ModelName}}Message)
+		r := new({{.ModelName}})
 
 		if err := protojson.Unmarshal(msg.Payload, r); err != nil {
 			log.Err(err).Msg("невозможно десериализовать данные сообщения")
@@ -74,7 +75,11 @@ func Make{{.ModelName}}MessageHandler(handler {{.ModelName}}MessageHandler) mess
 			Body: r,
 		}
 
-		return handler.Handle(msg.Context(), evt)
+		if err = handler.Handle(msg.Context(), evt); err != nil {
+        	return errors.Wrap(err, "handler.Handle")
+        }
+
+        return nil
 	}
 }
 
@@ -97,7 +102,11 @@ func (r *outgoingPublisher) Publish(event *{{.ModelName}}MessageEvent) error {
 	msg := message.NewMessage(event.ID.String(), payload)
 	msg.Metadata = event.Meta
 
-	return r.mp.Publish(r.topic, msg)
+	if err = r.mp.Publish(r.topic, msg); err != nil {
+		return errors.Wrap(err, "error publish")
+	}
+
+	return nil
 }
 
 // Make{{.ModelName}}MessagePublisher конструктор для паблишера сообщений типа {{.ModelName}}MessageEvent
