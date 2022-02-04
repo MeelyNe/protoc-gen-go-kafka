@@ -84,7 +84,7 @@ func Make{{.ModelName}}Handler(handler {{.ModelName}}Handler) message.NoPublishH
 }
 
 // {{.ModelNamePrivate}}Publisher интерфейс для отправки сообщений типа {{.ModelName}}Event в очередь
-type {{ModelNamePrivate}}Publisher interface {
+type {{.ModelNamePrivate}}Publisher interface {
 	Publish(event *{{.ModelName}}Event) error
 }
 
