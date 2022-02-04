@@ -100,6 +100,11 @@ func (r *{{.ModelNamePrivate}}Publisher) Publish(event *{{.ModelName}}Event) err
 	}
 
 	msg := message.NewMessage(event.ID.String(), payload)
+
+	if event.Meta == nil {
+ 		event.Meta = map[string]string{}
+ 	}
+
 	msg.Metadata = event.Meta
 
 	if err = r.mp.Publish(r.topic, msg); err != nil {
