@@ -37,7 +37,7 @@ func main() {
 			for _, message := range file.Proto.GetMessageType() {
 				if strings.HasSuffix(message.GetName(), *suffix) {
 					tmpl, err := parseTemplates(&gen{
-						ModelNamePrivate: strings.ToLower(message.GetName()),
+						ModelNamePrivate: fmt.Sprintf("%s%s", strings.ToLower(message.GetName()[:1]), message.GetName()[1:]),
 						ModelName:        message.GetName(),
 						PackageName:      string(file.GoPackageName),
 						PathFile:         file.Desc.Path(),
