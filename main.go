@@ -21,9 +21,21 @@ type gen struct {
 	PathFile         string
 }
 
-const defaultSuffix = "Export"
+const (
+	defaultSuffix = "Export"
+	version       = "v1.1.1"
+)
 
 func main() {
+	versionFlag := flag.Bool("version", false, "print version and exit")
+	flag.Parse()
+
+	if *versionFlag {
+		fmt.Println(version)
+
+		return
+	}
+
 	var flags flag.FlagSet
 	suffix := flags.String("suffix", defaultSuffix, "")
 	protoc := protogen.Options{
