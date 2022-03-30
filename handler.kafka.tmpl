@@ -94,7 +94,11 @@ type {{.ModelNamePrivate}}Publisher struct {
 }
 
 func (r *{{.ModelNamePrivate}}Publisher) Publish(event *{{.ModelName}}Event) error {
-	payload, err := protojson.Marshal(event.Body)
+	marhal := protojson.MarshalOptions{
+		EmitUnpopulated: true,
+	}
+
+	payload, err := marhal.Marshal(event.Body)
 	if err != nil {
 		return errors.Wrap(err, "невозможно сериализовать данные")
 	}
