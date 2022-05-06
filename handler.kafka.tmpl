@@ -19,7 +19,7 @@ import (
 
 // {{.ModelName}}Event структурая, содержащая поля сообщения
 type {{.ModelName}}Event struct {
-	ID   uuid.UUID
+	ID   string
 	Meta map[string]string
 	Body *{{.ModelName}}
 }
@@ -27,7 +27,7 @@ type {{.ModelName}}Event struct {
 // New{{.ModelName}}Event конструктор события {{.ModelName}}Event
 func New{{.ModelName}}Event(data *{{.ModelName}}) *{{.ModelName}}Event {
 	return &{{.ModelName}}Event{
-		ID:   uuid.New(),
+		ID:   uuid.New().String(),
 		Meta: make(map[string]string),
 		Body: data,
 	}
@@ -62,15 +62,8 @@ func Make{{.ModelName}}Handler(handler {{.ModelName}}Handler) message.NoPublishH
 			return nil
 		}
 
-		id, err := uuid.Parse(msg.UUID)
-		if err != nil {
-			log.Err(err).Msg("невозможно разобрать идентификатор сообщения")
-
-			return nil
-		}
-
 		evt := &{{.ModelName}}Event{
-			ID:   id,
+			ID:   msg.UUID,
 			Meta: msg.Metadata,
 			Body: r,
 		}
@@ -103,7 +96,7 @@ func (r *{{.ModelNamePrivate}}Publisher) Publish(event *{{.ModelName}}Event) err
 		return errors.Wrap(err, "невозможно сериализовать данные")
 	}
 
-	msg := message.NewMessage(event.ID.String(), payload)
+	msg := message.NewMessage(event.ID, payload)
 
 	if event.Meta == nil {
  		event.Meta = map[string]string{}
