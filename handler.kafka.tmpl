@@ -11,7 +11,6 @@ import (
 	"context"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -25,9 +24,9 @@ type {{.ModelName}}Event struct {
 }
 
 // New{{.ModelName}}Event конструктор события {{.ModelName}}Event
-func New{{.ModelName}}Event(data *{{.ModelName}}) *{{.ModelName}}Event {
+func New{{.ModelName}}Event(id string, data *{{.ModelName}}) *{{.ModelName}}Event {
 	return &{{.ModelName}}Event{
-		ID:   uuid.New().String(),
+		ID:   id,
 		Meta: make(map[string]string),
 		Body: data,
 	}
@@ -68,7 +67,7 @@ func Make{{.ModelName}}Handler(handler {{.ModelName}}Handler) message.NoPublishH
 			Body: r,
 		}
 
-		if err = handler.Handle(msg.Context(), evt); err != nil {
+		if err := handler.Handle(msg.Context(), evt); err != nil {
         	return errors.Wrap(err, "не удалось обработать событие")
         }
 
