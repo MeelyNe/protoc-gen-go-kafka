@@ -19,11 +19,12 @@ type gen struct {
 	ModelName        string
 	PackageName      string
 	PathFile         string
+	Version          string
 }
 
 const (
 	defaultSuffix = "Export"
-	version       = "v1.1.1"
+	version       = "v1.1.3"
 )
 
 func main() {
@@ -53,6 +54,7 @@ func main() {
 						ModelName:        message.GetName(),
 						PackageName:      string(file.GoPackageName),
 						PathFile:         file.Desc.Path(),
+						Version:          version,
 					})
 					if err != nil {
 						plugin.Error(err)
