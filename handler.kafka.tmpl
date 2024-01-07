@@ -12,8 +12,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
-	"google.golang.org/protobuf/encoding/protojson"
+	"github.com/mailru/easyjson"
 )
 
 // {{.ModelName}}Event структурая, содержащая поля сообщения
@@ -55,10 +54,8 @@ func Make{{.ModelName}}Handler(handler {{.ModelName}}Handler) message.NoPublishH
 	return func(msg *message.Message) error {
 		r := new({{.ModelName}})
 
-		if err := protojson.Unmarshal(msg.Payload, r); err != nil {
-			log.Err(err).Msg("невозможно десериализовать данные сообщения")
-
-			return nil
+		if err := easyjson.Unmarshal(msg.Payload, r); err != nil {
+			return errors.Wrap(err, "невозможно распарсить тело сообщения")
 		}
 
 		evt := &{{.ModelName}}Event{
@@ -86,11 +83,7 @@ type {{.ModelNamePrivate}}Publisher struct {
 }
 
 func (r *{{.ModelNamePrivate}}Publisher) Publish(event *{{.ModelName}}Event) error {
-	marhal := protojson.MarshalOptions{
-		EmitUnpopulated: true,
-	}
-
-	payload, err := marhal.Marshal(event.Body)
+	payload, err := easyjson.Marshal(event.Body)
 	if err != nil {
 		return errors.Wrap(err, "невозможно сериализовать данные")
 	}
