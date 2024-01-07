@@ -46,13 +46,8 @@ func main() {
 		if *suffix == "" {
 			*suffix = defaultSuffix
 		}
+
 		for _, file := range plugin.Files {
-			if err := generate(string(file.Desc.FullName().Name())); err != nil {
-				plugin.Error(err)
-
-				continue
-			}
-
 			for _, message := range file.Proto.GetMessageType() {
 				if strings.HasSuffix(message.GetName(), *suffix) {
 					tmpl, err := parseTemplates(&gen{
