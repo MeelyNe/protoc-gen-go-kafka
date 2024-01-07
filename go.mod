@@ -3,6 +3,7 @@ module github.com/MeelyNe/protoc-gen-go-kafka
 go 1.17
 
 require (
+	github.com/mailru/easyjson v0.7.7
 	github.com/stretchr/testify v1.8.4
 	google.golang.org/protobuf v1.26.0
 )
